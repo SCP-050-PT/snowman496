@@ -11,8 +11,8 @@
     <meta name="theme-color" content="#0a3d62">
     <meta name="description" content="Новогоднее AR-приложение для фото с эффектами снега">
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAXklEQVQ4je3TsQ3AIAwE0KsWogWlG5FhYAnmYZUIBES4zCfZKt3JxgyMAS8gABegSsIqVZLhAQAL0CRhlxukWe4c4IBVEi4z+59cHgDM8qUzK84ZAGCTK8uXfAO/3ANFzA+W4BZjlQAAAABJRU5ErkJggg==">
+    <!-- Favicon с эмодзи снеговика ⛄ -->
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAaElEQVQ4je2SMQrAIAxFf3G4XgOX3B7vP5M7GJyydYggsZW6KB0MliQkPwUpxgagkAKAVDPJEnmX0eKkAGBN5qpgW6BVBDEbO9myJAWz+wQAD7XhXQETAA8AtWwBQHFK1sD8K/zDfd98AWMHRsAUH4H3AAAAAElFTkSuQmCC">
     
     <style>
         :root {
@@ -230,7 +230,7 @@
             padding: 0 10px;
         }
 
-        /* Кнопки */
+        /* Кнопки с эмодзи */
         .fab {
             position: relative;
             width: var(--fab-size);
@@ -247,12 +247,7 @@
             outline: none;
             cursor: pointer;
             transition: all 0.2s ease;
-        }
-
-        .fab svg {
-            width: 24px;
-            height: 24px;
-            fill: currentColor;
+            font-size: 28px; /* Увеличиваем размер эмодзи */
         }
 
         .fab:active {
@@ -292,35 +287,12 @@
             opacity: 0.8;
         }
 
-        /* Подписи к кнопкам */
-        .control-label {
-            position: absolute;
-            bottom: -20px;
-            font-size: 11px;
-            color: white;
-            opacity: 0.8;
-            white-space: nowrap;
-            text-align: center;
-            width: 100%;
-        }
-
-        .control-wrapper {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
         /* Адаптивность */
         @media (max-width: 480px) {
             .fab {
                 width: 50px;
                 height: 50px;
-            }
-            
-            .fab svg {
-                width: 22px;
-                height: 22px;
+                font-size: 24px;
             }
             
             #controls {
@@ -336,6 +308,19 @@
                 width: 100px;
                 height: 100px;
                 font-size: 50px;
+            }
+        }
+
+        /* Для очень маленьких экранов */
+        @media (max-width: 360px) {
+            .fab {
+                width: 46px;
+                height: 46px;
+                font-size: 22px;
+            }
+            
+            #controls {
+                gap: 8px;
             }
         }
     </style>
@@ -369,70 +354,37 @@
     <!-- Бренд -->
     <div id="brand">snowman496school.ru</div>
 
-    <!-- Панель управления -->
+    <!-- Панель управления с эмодзи -->
     <div id="controls" aria-label="Управление">
-        <div class="control-wrapper">
-            <button id="btnSnow" class="fab is-on" type="button" aria-pressed="true" title="Снег">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 2v20M12 12L21 7M12 12L3 7M12 12l9 5M12 12L3 17M2 12h20M7 4l3 1.8M17 4l-3 1.8M7 20l3-1.8M17 20l-3-1.8"/>
-                </svg>
-            </button>
-            <div class="control-label">Снег</div>
-        </div>
+        <!-- ❄️ Снег -->
+        <button id="btnSnow" class="fab is-on" type="button" aria-pressed="true" title="Снег">
+            ❄️
+        </button>
         
-        <div class="control-wrapper">
-            <button id="btnSnowman" class="fab is-on" type="button" aria-pressed="true" title="Снеговик">
-                <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="15" r="5"/>
-                    <circle cx="12" cy="7" r="3"/>
-                    <circle cx="8.5" cy="6.5" r="1"/>
-                    <circle cx="15.5" cy="6.5" r="1"/>
-                    <path d="M12 10v4M9 13h6"/>
-                </svg>
-            </button>
-            <div class="control-label">Снеговик</div>
-        </div>
+        <!-- ⛄ Снеговик -->
+        <button id="btnSnowman" class="fab is-on" type="button" aria-pressed="true" title="Снеговик">
+            ⛄
+        </button>
         
-        <div class="control-wrapper">
-            <button id="btnMusic" class="fab" type="button" aria-pressed="false" title="Музыка">
-                <svg viewBox="0 0 24 24">
-                    <path d="M9 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-                    <path d="M9 12V5l10-2v7"/>
-                </svg>
-            </button>
-            <div class="control-label">Музыка</div>
-        </div>
+        <!-- 🎵 Музыка -->
+        <button id="btnMusic" class="fab" type="button" aria-pressed="false" title="Музыка">
+            🎵
+        </button>
         
-        <div class="control-wrapper">
-            <button id="btnDrifts" class="fab" type="button" aria-pressed="false" title="Сугробы">
-                <svg viewBox="0 0 24 24">
-                    <path d="M3 18h18v3H3zM5 15h2v3H5zM7 12h2v3H7zM9 9h2v3H9zM11 12h2v3h-2zM13 15h2v3h-2zM15 12h2v3h-2zM17 9h2v3h-2z"/>
-                </svg>
-            </button>
-            <div class="control-label">Сугробы</div>
-        </div>
+        <!-- 🏔️ Сугробы (используем эмодзи горы со снегом) -->
+        <button id="btnDrifts" class="fab" type="button" aria-pressed="false" title="Сугробы">
+            🏔️
+        </button>
         
-        <div class="control-wrapper">
-            <button id="btnPlow" class="fab is-on" type="button" aria-pressed="true" title="Автопроезд машины">
-                <svg viewBox="0 0 24 24">
-                    <path d="M3 14h9l3-3h3l3 5v3H3z"/>
-                    <circle cx="8" cy="19" r="2"/>
-                    <circle cx="18" cy="19" r="2"/>
-                    <path d="M19 11h4"/>
-                </svg>
-            </button>
-            <div class="control-label">Машина</div>
-        </div>
+        <!-- 🚜 Машина -->
+        <button id="btnPlow" class="fab is-on" type="button" aria-pressed="true" title="Автопроезд машины">
+            🚜
+        </button>
         
-        <div class="control-wrapper">
-            <button id="shotBtn" class="fab" type="button" title="Сделать фото">
-                <svg viewBox="0 0 24 24">
-                    <path d="M4 8h3l1.6-2.2c.2-.3.5-.5.9-.5h4.9c.4 0 .7.2.9.5L17 8h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z"/>
-                    <circle cx="12" cy="14" r="3"/>
-                </svg>
-            </button>
-            <div class="control-label">Фото</div>
-        </div>
+        <!-- 📸 Фото -->
+        <button id="shotBtn" class="fab" type="button" title="Сделать фото">
+            📸
+        </button>
     </div>
 
     <script>
@@ -464,7 +416,7 @@
         let snowEnabled = true;
         let snowmanEnabled = true;
         let musicEnabled = false;
-        let driftsEnabled = false;  // Статические сугробы
+        let driftsEnabled = false;
         let plowAutoEnabled = true;
 
         /* ========== МУЗЫКА ========== */
@@ -514,7 +466,7 @@
         let binW = 4;
         let bins = 0;
         let groundY = 0;
-        const spray = []; // Частицы разлёта
+        const spray = [];
         let nextPlowTimer = null;
 
         function makeFlakeSprite(size) {
@@ -606,7 +558,6 @@
                 }
             }
 
-            // Обновление частиц разлёта
             for (let i = spray.length - 1; i >= 0; i--) {
                 const p = spray[i];
                 p.vy += 1200 * dt;
@@ -618,7 +569,6 @@
                 }
             }
 
-            // Сглаживание сугробов
             for (let i = 1; i < bins - 1; i++) {
                 const avg = (heightmap[i-1] + heightmap[i] + heightmap[i+1]) / 3;
                 heightmap[i] = heightmap[i] * 0.97 + avg * 0.03;
@@ -630,7 +580,6 @@
             try {
                 targetCtx.drawImage(video, 0, 0, canvas.clientWidth, canvas.clientHeight);
             } catch (_) {}
-            // Легкое затемнение для лучшей видимости эффектов
             targetCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             targetCtx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
         }
@@ -642,7 +591,6 @@
             const H = canvas.clientHeight;
             targetCtx.save();
             
-            // Градиент для сугробов
             const grad = targetCtx.createLinearGradient(0, groundY - 80, 0, groundY + 10);
             grad.addColorStop(0, 'rgba(255, 255, 255, 0.98)');
             grad.addColorStop(1, 'rgba(255, 255, 255, 0.86)');
@@ -719,20 +667,17 @@
             
             plow.x += plow.speed * dt * plow.dir;
 
-            // Зона чистки
             const center = plow.x + plow.width * 0.6;
             const w = plow.blade;
             const i0 = Math.max(0, Math.floor((center - w/2) / binW));
             const i1 = Math.min(bins - 1, Math.floor((center + w/2) / binW));
 
-            // Чистка сугробов
             for (let i = i0; i <= i1; i++) {
                 const h = heightmap[i] || 0;
                 if (h > 0) {
                     const take = Math.min(10.0, h);
                     heightmap[i] = Math.max(0, h - take);
                     
-                    // Создание частиц разлёта
                     for (let s = 0; s < 2; s++) {
                         spray.push({
                             x: i * binW + Math.random() * binW,
@@ -763,31 +708,26 @@
             targetCtx.save();
             targetCtx.translate(plow.x, y);
 
-            // Тень
             targetCtx.fillStyle = 'rgba(0, 0, 0, 0.25)';
             targetCtx.beginPath();
             targetCtx.ellipse(W * 0.35, 6, W * 0.38, 10, 0, 0, Math.PI * 2);
             targetCtx.fill();
 
-            // Корпус (красный)
             targetCtx.fillStyle = '#e74c3c';
             targetCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
             targetCtx.lineWidth = 2;
 
-            // Основа
             targetCtx.beginPath();
             targetCtx.roundRect(0, -H, W * 0.7, H, 8);
             targetCtx.fill();
             targetCtx.stroke();
 
-            // Кабина
             targetCtx.fillStyle = '#3498db';
             targetCtx.beginPath();
             targetCtx.roundRect(W * 0.5, -H * 1.4, W * 0.4, H * 0.9, 8);
             targetCtx.fill();
             targetCtx.stroke();
 
-            // Ковш
             targetCtx.fillStyle = '#f1c40f';
             targetCtx.beginPath();
             targetCtx.moveTo(W * 0.7, -H * 0.4);
@@ -796,14 +736,12 @@
             targetCtx.closePath();
             targetCtx.fill();
 
-            // Колёса
             targetCtx.fillStyle = '#2c3e50';
             targetCtx.beginPath();
             targetCtx.arc(W * 0.2, -8, 12, 0, Math.PI * 2);
             targetCtx.arc(W * 0.6, -8, 12, 0, Math.PI * 2);
             targetCtx.fill();
 
-            // Фары (мигающие)
             const flashIntensity = Math.sin(t * 0.008) > 0 ? 1 : 0.6;
             targetCtx.fillStyle = `rgba(255, 200, 0, ${flashIntensity})`;
             targetCtx.beginPath();
@@ -836,7 +774,6 @@
             ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
             renderVideo(ctx);
 
-            // Порядок отрисовки: сугробы → машина → частицы → снежинки
             drawDrifts(ctx);
             drawPlow(ctx, t);
             drawSpray(ctx);
@@ -873,7 +810,6 @@
                 spawnFlakes();
                 running = true;
 
-                // Показываем интерфейс
                 permissionScreen.classList.add('hidden');
                 setTimeout(() => {
                     permissionScreen.style.display = 'none';
@@ -884,7 +820,6 @@
                     lastT = performance.now();
                     requestAnimationFrame(loop);
                     
-                    // Первый автопроезд через 3 секунды
                     scheduleNextPlow(3000);
                 }, 500);
 
@@ -922,7 +857,6 @@
             snowman.style.setProperty('--ty', ty + 'px');
             snowman.style.setProperty('--s', s);
             
-            // Обновляем индикатор масштаба
             const indicator = snowman.querySelector('.scale-indicator');
             indicator.textContent = Math.round(s * 100) + '%';
             indicator.style.display = 'block';
@@ -1018,7 +952,6 @@
             btnPlow.classList.toggle('is-on', plowAutoEnabled);
             btnPlow.setAttribute('aria-pressed', String(plowAutoEnabled));
             
-            // Вибрация на мобильных
             if (navigator.vibrate) navigator.vibrate(8);
         }
 
@@ -1051,7 +984,6 @@
 
         /* ========== ФОТОСЪЕМКА ========== */
         shotBtn.addEventListener('click', async () => {
-            // Вспышка
             flash.classList.add('active');
             setTimeout(() => flash.classList.remove('active'), 300);
 
@@ -1064,16 +996,13 @@
             const sctx = shot.getContext('2d');
             sctx.setTransform(CAPTURE_DPR, 0, 0, CAPTURE_DPR, 0, 0);
 
-            // Рендерим видео
             renderVideo(sctx);
             
-            // Рендерим эффекты
             if (driftsEnabled) drawDrifts(sctx);
             if (plow.active) drawPlow(sctx, performance.now());
             drawSpray(sctx);
             if (snowEnabled) drawFlakes(sctx);
             
-            // Рендерим снеговика
             if (snowmanEnabled && snowmanImg.complete) {
                 const rC = canvas.getBoundingClientRect();
                 const rM = snowman.getBoundingClientRect();
@@ -1090,13 +1019,11 @@
                 sctx.restore();
             }
             
-            // Добавляем логотип
             sctx.fillStyle = 'white';
             sctx.font = 'bold 16px Arial';
             sctx.textAlign = 'center';
             sctx.fillText('snowman496school.ru', W/2, H - 30);
             
-            // Сохраняем
             shot.toBlob(blob => {
                 const now = new Date();
                 const pad = n => String(n).padStart(2, '0');
@@ -1122,7 +1049,6 @@
         snowmanImg.onload = () => console.log('Снеговик загружен');
         snowmanImg.onerror = () => {
             console.warn('Снеговик не загружен');
-            // Альтернативный снеговик (белые круги)
             snowmanImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDE1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNzUiIGN5PSIxNDAiIHI9IjQwIiBmaWxsPSJ3aGl0ZSIvPjxjaXJjbGUgY3g9Ijc1IiBjeT0iODAiIHI9IjMwIiBmaWxsPSJ3aGl0ZSIvPjxjaXJjbGUgY3g9Ijc1IiBjeT0iNDAiIHI9IjIwIiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==';
         };
     </script>
