@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Снеговик 496 Школа - Новогодний AR</title>
     
-    <!-- Мета-теги для PWA -->
+    <!-- Мета-теги -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Снеговик AR">
     <meta name="theme-color" content="#0a3d62">
     <meta name="description" content="Новогоднее AR-приложение для фото с эффектами снега">
     
     <!-- Favicon с эмодзи снеговика ⛄ -->
-    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAaElEQVQ4je2SMQrAIAxFf3G4XgOX3B7vP5M7GJyydYggsZW6KB0MliQkPwUpxgagkAKAVDPJEnmX0eKkAGBN5qpgW6BVBDEbO9myJAWz+wQAD7XhXQETAA8AtWwBQHFK1sD8K/zDfd98AWMHRsAUH4H3AAAAAElFTkSuQmCC">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#9924;</text></svg>">
     
     <style>
         :root {
@@ -63,14 +63,14 @@
             z-index: 2;
         }
 
-        /* Снеговик (маскот) */
+        /* Снеговик - увеличен на 50% */
         #snowman {
             position: absolute;
             left: 20px;
             bottom: 120px;
             z-index: 5;
             display: none;
-            width: 150px;
+            width: 225px; /* Было 150px, увеличено на 50% */
             max-width: 430px;
             touch-action: none;
             user-select: none;
@@ -80,6 +80,7 @@
             --s: 1;
             transform: translate(var(--tx), var(--ty)) scale(var(--s));
             transform-origin: center center;
+            transition: opacity 0.5s ease;
         }
 
         #snowman.dragging {
@@ -196,6 +197,25 @@
             line-height: 1.4;
         }
 
+        /* Индикатор загрузки */
+        .loader {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+        }
+
+        .loader.active {
+            display: block;
+        }
+
         /* Бренд и панель управления */
         #brand {
             position: fixed;
@@ -247,7 +267,9 @@
             outline: none;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-size: 28px; /* Увеличиваем размер эмодзи */
+            font-size: 28px;
+            opacity: 1;
+            transition: opacity 0.3s ease, transform 0.2s ease;
         }
 
         .fab:active {
@@ -263,6 +285,11 @@
             filter: brightness(1.2);
         }
 
+        .fab.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         #shotBtn {
             background: rgba(255, 71, 87, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -270,6 +297,52 @@
 
         #shotBtn:hover {
             background: rgba(255, 71, 87, 1);
+        }
+
+        /* Прелоадер для фото */
+        #photo-preview {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 999;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #preview-image {
+            max-width: 90%;
+            max-height: 70%;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+        }
+
+        .preview-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .preview-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #save-btn {
+            background: #4a69bd;
+            color: white;
+        }
+
+        #cancel-btn {
+            background: #666;
+            color: white;
         }
 
         /* Вспышка */
@@ -309,9 +382,13 @@
                 height: 100px;
                 font-size: 50px;
             }
+            
+            /* Снеговик адаптивен */
+            #snowman {
+                width: 180px; /* Уменьшаем для мобильных, но всё ещё больше оригинала */
+            }
         }
 
-        /* Для очень маленьких экранов */
         @media (max-width: 360px) {
             .fab {
                 width: 46px;
@@ -321,6 +398,10 @@
             
             #controls {
                 gap: 8px;
+            }
+            
+            #snowman {
+                width: 160px;
             }
         }
     </style>
@@ -335,6 +416,21 @@
         <div class="permission-note">
             Для работы приложения необходим доступ к камере.
             Мы не сохраняем и не передаём ваши фото.
+        </div>
+    </div>
+
+    <!-- Индикатор загрузки -->
+    <div id="loader" class="loader">
+        <div style="font-size: 30px; margin-bottom: 10px;">⛄</div>
+        <div>Загрузка...</div>
+    </div>
+
+    <!-- Прелоадер фото -->
+    <div id="photo-preview">
+        <img id="preview-image" alt="Предпросмотр фото">
+        <div class="preview-controls">
+            <button id="save-btn" class="preview-btn">Сохранить фото</button>
+            <button id="cancel-btn" class="preview-btn">Отмена</button>
         </div>
     </div>
 
@@ -354,34 +450,28 @@
     <!-- Бренд -->
     <div id="brand">snowman496school.ru</div>
 
-    <!-- Панель управления с эмодзи -->
+    <!-- Панель управления -->
     <div id="controls" aria-label="Управление">
-        <!-- ❄️ Снег -->
         <button id="btnSnow" class="fab is-on" type="button" aria-pressed="true" title="Снег">
             ❄️
         </button>
         
-        <!-- ⛄ Снеговик -->
         <button id="btnSnowman" class="fab is-on" type="button" aria-pressed="true" title="Снеговик">
             ⛄
         </button>
         
-        <!-- 🎵 Музыка -->
         <button id="btnMusic" class="fab" type="button" aria-pressed="false" title="Музыка">
             🎵
         </button>
         
-        <!-- 🏔️ Сугробы (используем эмодзи горы со снегом) -->
         <button id="btnDrifts" class="fab" type="button" aria-pressed="false" title="Сугробы">
             🏔️
         </button>
         
-        <!-- 🚜 Машина -->
         <button id="btnPlow" class="fab is-on" type="button" aria-pressed="true" title="Автопроезд машины">
             🚜
         </button>
         
-        <!-- 📸 Фото -->
         <button id="shotBtn" class="fab" type="button" title="Сделать фото">
             📸
         </button>
@@ -389,6 +479,16 @@
 
     <script>
         'use strict';
+
+        /* ========== УЛУЧШЕНИЕ 1: Определение устройства ========== */
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const isLowEndDevice = (() => {
+            if (!isMobile) return false;
+            const memory = navigator.deviceMemory || 4;
+            const cores = navigator.hardwareConcurrency || 4;
+            return memory < 4 || cores < 4;
+        })();
 
         /* ========== ССЫЛКИ НА ЭЛЕМЕНТЫ ========== */
         const startBtn = document.getElementById('start-btn');
@@ -402,44 +502,96 @@
         const flash = document.getElementById('flash');
         const brand = document.getElementById('brand');
         const permissionScreen = document.getElementById('permission-screen');
+        const loader = document.getElementById('loader');
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d', { alpha: true });
         const snowman = document.getElementById('snowman');
         const snowmanImg = document.getElementById('snowmanImg');
+        const photoPreview = document.getElementById('photo-preview');
+        const previewImage = document.getElementById('preview-image');
+        const saveBtn = document.getElementById('save-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
 
-        const DPR = Math.min(window.devicePixelRatio || 1, 2);
-        const CAPTURE_DPR = DPR;
+        const DPR = Math.min(window.devicePixelRatio || 1, isLowEndDevice ? 1 : 2);
+        const CAPTURE_DPR = isLowEndDevice ? 1 : DPR;
 
-        /* ========== СОСТОЯНИЕ ПРИЛОЖЕНИЯ ========== */
+        /* ========== УЛУЧШЕНИЕ 2: Сохранение настроек ========== */
         let running = false;
-        let snowEnabled = true;
-        let snowmanEnabled = true;
-        let musicEnabled = false;
-        let driftsEnabled = false;
-        let plowAutoEnabled = true;
+        let state = {
+            snowEnabled: true,
+            snowmanEnabled: true,
+            musicEnabled: false,
+            driftsEnabled: false,
+            plowAutoEnabled: true,
+            scale: 1.5, // Начальный масштаб снеговика увеличен на 50%
+            lastCamera: 'environment'
+        };
 
-        /* ========== МУЗЫКА ========== */
+        function loadSettings() {
+            try {
+                const saved = localStorage.getItem('snowmanAR_settings');
+                if (saved) {
+                    const loaded = JSON.parse(saved);
+                    Object.assign(state, loaded);
+                    console.log('Настройки загружены:', state);
+                }
+            } catch (e) {
+                console.warn('Не удалось загрузить настройки:', e);
+            }
+        }
+
+        function saveSettings() {
+            try {
+                localStorage.setItem('snowmanAR_settings', JSON.stringify(state));
+            } catch (e) {
+                console.warn('Не удалось сохранить настройки:', e);
+            }
+        }
+
+        // Загружаем настройки при старте
+        loadSettings();
+
+        /* ========== МУЗЫКА С ИНДИКАТОРОМ ЗАГРУЗКИ ========== */
         let bgm = null;
         
         function initAudio() {
             if (bgm) return;
+            
+            loader.classList.add('active');
+            loader.innerHTML = '<div style="font-size: 30px; margin-bottom: 10px;">🎵</div><div>Загрузка музыки...</div>';
+            
             bgm = new Audio();
             bgm.loop = true;
             bgm.preload = 'auto';
             bgm.src = 'assets/song.mp3';
             bgm.volume = 0.5;
+            
+            bgm.addEventListener('canplaythrough', () => {
+                loader.classList.remove('active');
+                console.log('Музыка загружена');
+            });
+            
+            bgm.addEventListener('error', () => {
+                loader.classList.remove('active');
+                console.warn('Музыка не загружена');
+            });
         }
         
         async function toggleMusic() {
-            if (!bgm) initAudio();
+            if (!bgm) {
+                initAudio();
+                // Даем время на загрузку
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
             
-            musicEnabled = !musicEnabled;
-            btnMusic.classList.toggle('is-on', musicEnabled);
-            btnMusic.setAttribute('aria-pressed', String(musicEnabled));
+            state.musicEnabled = !state.musicEnabled;
+            btnMusic.classList.toggle('is-on', state.musicEnabled);
+            btnMusic.setAttribute('aria-pressed', String(state.musicEnabled));
+            saveSettings();
             
             try {
-                if (musicEnabled) {
+                if (state.musicEnabled) {
                     await bgm.play();
                 } else {
                     bgm.pause();
@@ -447,19 +599,19 @@
                 }
             } catch (err) {
                 console.warn('Ошибка воспроизведения музыки:', err);
-                musicEnabled = false;
+                state.musicEnabled = false;
                 btnMusic.classList.remove('is-on');
             }
         }
 
-        /* ========== УТИЛИТЫ ========== */
+        /* ========== УЛУЧШЕНИЕ 4: Утилиты ========== */
         function cssPx(varName, fallback) {
             const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
             const m = /(-?\d+(\.\d+)?)px/.exec(v);
             return m ? parseFloat(m[1]) : fallback;
         }
 
-        /* ========== СНЕГ В CANVAS ========== */
+        /* ========== УЛУЧШЕНИЕ 5: Упрощённый снег ========== */
         let flakes = [];
         let sprites = [];
         let heightmap = [];
@@ -469,11 +621,18 @@
         const spray = [];
         let nextPlowTimer = null;
 
+        // Только обычные снежинки (убраны звездочки, сердечки, быстрые)
+        const flakeTypes = {
+            normal: { minSize: 1.4, maxSize: 2.4, speed: 70, sway: 28 }
+        };
+
         function makeFlakeSprite(size) {
             const s = Math.max(10, size | 0);
             const off = document.createElement('canvas');
             off.width = off.height = s;
             const c = off.getContext('2d');
+            
+            // Простая снежинка
             const g = c.createRadialGradient(s/2, s/2, s*0.05, s/2, s/2, s*0.48);
             g.addColorStop(0, 'rgba(255,255,255,.98)');
             g.addColorStop(0.6, 'rgba(255,255,255,.45)');
@@ -482,11 +641,16 @@
             c.beginPath();
             c.arc(s/2, s/2, s*0.48, 0, Math.PI*2);
             c.fill();
+            
             return off;
         }
 
         function buildSprites() {
-            sprites = [16, 14, 12, 10].map(makeFlakeSprite);
+            sprites = [];
+            // Только обычные снежинки
+            for (let size of [16, 14, 12, 10]) {
+                sprites.push(makeFlakeSprite(size));
+            }
         }
 
         function initField() {
@@ -500,19 +664,36 @@
 
         function spawnFlakes() {
             const area = canvas.clientWidth * canvas.clientHeight;
-            const n = Math.max(100, Math.min(240, Math.floor(area / 10000)));
+            let n;
+            
+            // Адаптация под слабые устройства
+            if (isLowEndDevice) {
+                n = Math.max(50, Math.min(120, Math.floor(area / 20000)));
+            } else if (isMobile) {
+                n = Math.max(80, Math.min(180, Math.floor(area / 12000)));
+            } else {
+                n = Math.max(100, Math.min(240, Math.floor(area / 10000)));
+            }
+            
             const H = canvas.clientHeight;
             
-            flakes = new Array(n).fill(0).map(() => ({
-                x: Math.random() * canvas.clientWidth,
-                y: -Math.random() * H,
-                r: 1.4 + Math.random() * 2.4,
-                vy: 70 + Math.random() * 90,
-                swayA: 28 + Math.random() * 32,
-                theta: Math.random() * Math.PI * 2,
-                swaySpeed: 1.0 + Math.random() * 1.4,
-                sprite: sprites[(Math.random() * sprites.length) | 0]
-            }));
+            flakes = new Array(n).fill(0).map(() => {
+                const config = flakeTypes['normal']; // Только нормальные
+                
+                return {
+                    x: Math.random() * canvas.clientWidth,
+                    y: -Math.random() * H,
+                    r: config.minSize + Math.random() * (config.maxSize - config.minSize),
+                    vy: config.speed + Math.random() * 30,
+                    swayA: config.sway + Math.random() * 15,
+                    theta: Math.random() * Math.PI * 2,
+                    swaySpeed: 0.8 + Math.random() * 1.6,
+                    type: 'normal',
+                    opacity: 0.7 + Math.random() * 0.3,
+                    spin: (Math.random() - 0.5) * 0.03,
+                    sprite: sprites[Math.floor(Math.random() * sprites.length)]
+                };
+            });
         }
 
         function fieldYAt(x) {
@@ -533,12 +714,12 @@
                 const i = idx + k;
                 if (i < 0 || i >= bins) continue;
                 const w = 1 - Math.abs(k) / (spread + 1);
-                heightmap[i] = Math.min(groundY, heightmap[i] + amount * w);
+                heightmap[i] = Math.min(groundY * 0.5, heightmap[i] + amount * w);
             }
         }
 
         function updateSnow(dt) {
-            if (!snowEnabled) return;
+            if (!state.snowEnabled) return;
 
             for (const f of flakes) {
                 f.theta += f.swaySpeed * dt;
@@ -585,7 +766,7 @@
         }
 
         function drawDrifts(targetCtx) {
-            if (!driftsEnabled) return;
+            if (!state.driftsEnabled) return;
             
             const W = canvas.clientWidth;
             const H = canvas.clientHeight;
@@ -613,12 +794,19 @@
         }
 
         function drawFlakes(targetCtx) {
-            if (!snowEnabled) return;
+            if (!state.snowEnabled) return;
             
             for (const f of flakes) {
+                targetCtx.save();
+                targetCtx.globalAlpha = f.opacity;
+                targetCtx.translate(f.x, f.y);
+                targetCtx.rotate(f.spin * performance.now() / 1000);
+                
                 const s = f.sprite;
                 const size = f.r * 2;
-                targetCtx.drawImage(s, f.x - f.r, f.y - f.r, size, size);
+                targetCtx.drawImage(s, -f.r, -f.r, size, size);
+                
+                targetCtx.restore();
             }
         }
 
@@ -633,13 +821,13 @@
             targetCtx.globalAlpha = 1;
         }
 
-        /* ========== СНЕГОУБОРОЧНАЯ МАШИНА ========== */
+        /* ========== СТАРАЯ СНЕГОУБОРОЧНАЯ МАШИНА ========== */
         const plow = {
             active: false,
             auto: true,
             x: -200,
             dir: 1,
-            speed: 280,
+            speed: isLowEndDevice ? 200 : 280,
             width: 180,
             height: 70,
             blade: 130,
@@ -648,7 +836,7 @@
 
         function scheduleNextPlow(delayMs = 30000) {
             clearTimeout(nextPlowTimer);
-            if (plowAutoEnabled && running) {
+            if (state.plowAutoEnabled && running) {
                 nextPlowTimer = setTimeout(() => {
                     startPlowPass();
                 }, delayMs);
@@ -667,6 +855,7 @@
             
             plow.x += plow.speed * dt * plow.dir;
 
+            // Зона чистки
             const center = plow.x + plow.width * 0.6;
             const w = plow.blade;
             const i0 = Math.max(0, Math.floor((center - w/2) / binW));
@@ -678,7 +867,8 @@
                     const take = Math.min(10.0, h);
                     heightmap[i] = Math.max(0, h - take);
                     
-                    for (let s = 0; s < 2; s++) {
+                    // Частицы от уборки
+                    for (let s = 0; s < (isLowEndDevice ? 1 : 3); s++) {
                         spray.push({
                             x: i * binW + Math.random() * binW,
                             y: fieldYAt(i * binW) - 6 - Math.random() * 8,
@@ -708,11 +898,13 @@
             targetCtx.save();
             targetCtx.translate(plow.x, y);
 
+            // Тень
             targetCtx.fillStyle = 'rgba(0, 0, 0, 0.25)';
             targetCtx.beginPath();
             targetCtx.ellipse(W * 0.35, 6, W * 0.38, 10, 0, 0, Math.PI * 2);
             targetCtx.fill();
 
+            // Корпус
             targetCtx.fillStyle = '#e74c3c';
             targetCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
             targetCtx.lineWidth = 2;
@@ -722,12 +914,14 @@
             targetCtx.fill();
             targetCtx.stroke();
 
+            // Кабина
             targetCtx.fillStyle = '#3498db';
             targetCtx.beginPath();
             targetCtx.roundRect(W * 0.5, -H * 1.4, W * 0.4, H * 0.9, 8);
             targetCtx.fill();
             targetCtx.stroke();
 
+            // Ковш
             targetCtx.fillStyle = '#f1c40f';
             targetCtx.beginPath();
             targetCtx.moveTo(W * 0.7, -H * 0.4);
@@ -736,12 +930,14 @@
             targetCtx.closePath();
             targetCtx.fill();
 
+            // Колёса
             targetCtx.fillStyle = '#2c3e50';
             targetCtx.beginPath();
             targetCtx.arc(W * 0.2, -8, 12, 0, Math.PI * 2);
             targetCtx.arc(W * 0.6, -8, 12, 0, Math.PI * 2);
             targetCtx.fill();
 
+            // Фары
             const flashIntensity = Math.sin(t * 0.008) > 0 ? 1 : 0.6;
             targetCtx.fillStyle = `rgba(255, 200, 0, ${flashIntensity})`;
             targetCtx.beginPath();
@@ -749,6 +945,25 @@
             targetCtx.fill();
 
             targetCtx.restore();
+        }
+
+        /* ========== УЛУЧШЕНИЕ 7: Плавное появление/исчезание ========== */
+        function fadeElement(element, show, duration = 500) {
+            return new Promise(resolve => {
+                if (show) {
+                    element.style.display = 'block';
+                    setTimeout(() => {
+                        element.style.opacity = '1';
+                    }, 10);
+                } else {
+                    element.style.opacity = '0';
+                    setTimeout(() => {
+                        element.style.display = 'none';
+                        resolve();
+                    }, duration);
+                }
+                setTimeout(resolve, duration);
+            });
         }
 
         /* ========== ГЛАВНЫЙ ЦИКЛ АНИМАЦИИ ========== */
@@ -782,20 +997,48 @@
             requestAnimationFrame(loop);
         }
 
-        /* ========== ЗАПУСК ПРИЛОЖЕНИЯ ========== */
+        /* ========== УЛУЧШЕНИЕ 8: Умный запуск камеры ========== */
         async function startApp() {
             try {
                 startBtn.disabled = true;
                 startBtn.textContent = 'Подключение...';
+                loader.classList.add('active');
+                loader.innerHTML = '<div style="font-size: 30px; margin-bottom: 10px;">📸</div><div>Подключение к камере...</div>';
 
-                const stream = await navigator.mediaDevices.getUserMedia({
+                const constraints = {
                     video: {
-                        facingMode: { ideal: 'environment' },
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        width: { ideal: isLowEndDevice ? 640 : 1280 },
+                        height: { ideal: isLowEndDevice ? 480 : 720 }
                     },
                     audio: false
-                });
+                };
+
+                if (state.lastCamera === 'environment') {
+                    constraints.video.facingMode = { ideal: 'environment' };
+                } else {
+                    constraints.video.facingMode = { ideal: 'user' };
+                }
+
+                let stream;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia(constraints);
+                } catch (error) {
+                    console.log('Первая камера недоступна, пробуем другую:', error.message);
+                    constraints.video.facingMode = constraints.video.facingMode.ideal === 'environment' 
+                        ? { ideal: 'user' }
+                        : { ideal: 'environment' };
+                    
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia(constraints);
+                        state.lastCamera = constraints.video.facingMode.ideal;
+                        saveSettings();
+                    } catch (secondError) {
+                        constraints.video.facingMode = { ideal: 'user' };
+                        delete constraints.video.width;
+                        delete constraints.video.height;
+                        stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    }
+                }
 
                 video.srcObject = stream;
 
@@ -810,34 +1053,190 @@
                 spawnFlakes();
                 running = true;
 
-                permissionScreen.classList.add('hidden');
-                setTimeout(() => {
-                    permissionScreen.style.display = 'none';
-                    brand.style.display = 'block';
-                    controls.style.display = 'flex';
-                    snowman.style.display = snowmanEnabled ? 'block' : 'none';
-                    
-                    lastT = performance.now();
-                    requestAnimationFrame(loop);
-                    
-                    scheduleNextPlow(3000);
-                }, 500);
+                // Плавное переключение экранов
+                await fadeElement(permissionScreen, false);
+                permissionScreen.style.display = 'none';
+                
+                await Promise.all([
+                    fadeElement(brand, true),
+                    fadeElement(controls, true),
+                    fadeElement(snowman, state.snowmanEnabled)
+                ]);
+                
+                loader.classList.remove('active');
+                
+                lastT = performance.now();
+                requestAnimationFrame(loop);
+                
+                scheduleNextPlow(3000);
 
             } catch (err) {
                 console.error('Ошибка камеры:', err);
-                alert('Не удалось получить доступ к камере. Проверьте разрешения.');
+                loader.classList.remove('active');
+                
+                if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    alert('Камера не найдена. Пожалуйста, проверьте подключение камеры.');
+                } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    alert('Доступ к камере запрещен. Разрешите доступ к камере в настройках браузера.');
+                } else if (err.name === 'NotSupportedError') {
+                    alert('Ваш браузер не поддерживает доступ к камере. Попробуйте использовать Chrome, Firefox или Safari.');
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    alert('Камера уже используется другим приложением. Закройте другие приложения, использующие камеру.');
+                } else {
+                    alert('Не удалось получить доступ к камере: ' + err.message);
+                }
+                
                 startBtn.disabled = false;
                 startBtn.textContent = 'Разрешить доступ к камере';
             }
         }
 
-        /* ========== ПЕРЕТАСКИВАНИЕ И МАСШТАБИРОВАНИЕ СНЕГОВИКА ========== */
+        /* ========== УЛУЧШЕНИЕ 9: Исправление для iOS ========== */
         const pointers = new Map();
         let dragId = null;
         let dragStartX = 0, dragStartY = 0;
         let startTx = 0, startTy = 0;
         let startScale = 1;
         let startDist = 0;
+        let isDragging = false;
+
+        // Установим начальный масштаб снеговика на 150%
+        snowman.style.setProperty('--s', '1.5');
+
+        if (isIOS) {
+            snowman.addEventListener('touchstart', handleTouchStart, { passive: false });
+            document.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.addEventListener('touchend', handleTouchEnd);
+            
+            function handleTouchStart(e) {
+                if (!running || snowman.style.display === 'none' || e.touches.length > 2) return;
+                e.preventDefault();
+                
+                const touch = e.touches[0];
+                pointers.set(touch.identifier, { x: touch.clientX, y: touch.clientY });
+                
+                const n = e.touches.length;
+                const { tx, ty, s } = getTransform();
+                
+                if (n === 1) {
+                    dragId = touch.identifier;
+                    dragStartX = touch.clientX;
+                    dragStartY = touch.clientY;
+                    startTx = tx;
+                    startTy = ty;
+                    isDragging = true;
+                    snowman.classList.add('dragging');
+                } else if (n === 2) {
+                    const t1 = e.touches[0];
+                    const t2 = e.touches[1];
+                    startScale = s;
+                    startDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY) || 1;
+                    isDragging = false;
+                    snowman.classList.remove('dragging');
+                    dragId = null;
+                }
+            }
+            
+            function handleTouchMove(e) {
+                if (!running || (!isDragging && e.touches.length !== 2)) return;
+                e.preventDefault();
+                
+                const n = e.touches.length;
+                const { tx, ty, s } = getTransform();
+                
+                if (n === 1 && isDragging) {
+                    const touch = e.touches[0];
+                    const dx = touch.clientX - dragStartX;
+                    const dy = touch.clientY - dragStartY;
+                    setTransform(startTx + dx, startTy + dy, s);
+                } else if (n === 2) {
+                    const t1 = e.touches[0];
+                    const t2 = e.touches[1];
+                    const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY) || 1;
+                    const scale = clamp(startScale * (dist / startDist), 0.5, 2.5); // Увеличил максимум до 250%
+                    setTransform(tx, ty, scale);
+                }
+            }
+            
+            function handleTouchEnd(e) {
+                isDragging = false;
+                snowman.classList.remove('dragging');
+                pointers.clear();
+                dragId = null;
+            }
+            
+        } else {
+            snowman.addEventListener('pointerdown', handlePointerStart, { passive: false });
+            
+            function handlePointerStart(e) {
+                if (!running || snowman.style.display === 'none') return;
+                e.preventDefault();
+                snowman.setPointerCapture(e.pointerId);
+                pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                
+                const n = pointers.size;
+                const { tx, ty, s } = getTransform();
+                
+                if (n === 1) {
+                    dragId = e.pointerId;
+                    dragStartX = e.clientX;
+                    dragStartY = e.clientY;
+                    startTx = tx;
+                    startTy = ty;
+                    snowman.classList.add('dragging');
+                } else if (n === 2) {
+                    startScale = s;
+                    const [p1, p2] = Array.from(pointers.values());
+                    startDist = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1;
+                    snowman.classList.remove('dragging');
+                    dragId = null;
+                }
+            }
+            
+            snowman.addEventListener('pointermove', (e) => {
+                if (!pointers.has(e.pointerId)) return;
+                e.preventDefault();
+                pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                
+                const n = pointers.size;
+                const { tx, ty, s } = getTransform();
+                
+                if (n === 1 && dragId !== null) {
+                    const cur = pointers.get(dragId);
+                    const dx = cur.x - dragStartX;
+                    const dy = cur.y - dragStartY;
+                    setTransform(startTx + dx, startTy + dy, s);
+                } else if (n === 2) {
+                    const [p1, p2] = Array.from(pointers.values());
+                    const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1;
+                    const scale = clamp(startScale * (dist / startDist), 0.5, 2.5); // Увеличил максимум до 250%
+                    setTransform(tx, ty, scale);
+                }
+            }, { passive: false });
+
+            function endPointer(e) {
+                if (pointers.has(e.pointerId)) pointers.delete(e.pointerId);
+                if (e.pointerId === dragId) {
+                    dragId = null;
+                    snowman.classList.remove('dragging');
+                }
+                if (pointers.size === 1) {
+                    const id = Array.from(pointers.keys())[0];
+                    const pt = pointers.get(id);
+                    const { tx, ty } = getTransform();
+                    dragId = id;
+                    dragStartX = pt.x;
+                    dragStartY = pt.y;
+                    startTx = tx;
+                    startTy = ty;
+                    snowman.classList.add('dragging');
+                }
+            }
+
+            snowman.addEventListener('pointerup', endPointer, { passive: false });
+            snowman.addEventListener('pointercancel', endPointer, { passive: false });
+            snowman.addEventListener('pointerleave', endPointer, { passive: false });
+        }
 
         function clamp(v, a, b) {
             return Math.max(a, Math.min(b, v));
@@ -848,7 +1247,7 @@
             return {
                 tx: parseFloat(st.getPropertyValue('--tx')) || 0,
                 ty: parseFloat(st.getPropertyValue('--ty')) || 0,
-                s: parseFloat(st.getPropertyValue('--s')) || 1
+                s: parseFloat(st.getPropertyValue('--s')) || 1.5 // Начальное значение 150%
             };
         }
 
@@ -861,196 +1260,212 @@
             indicator.textContent = Math.round(s * 100) + '%';
             indicator.style.display = 'block';
             setTimeout(() => indicator.style.display = 'none', 1000);
+            
+            // Сохраняем текущий масштаб в настройки
+            state.scale = s;
+            saveSettings();
         }
 
-        snowman.addEventListener('pointerdown', e => {
-            if (!running || snowman.style.display === 'none') return;
-            e.preventDefault();
-            snowman.setPointerCapture(e.pointerId);
-            pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-            
-            const n = pointers.size;
-            const { tx, ty, s } = getTransform();
-            
-            if (n === 1) {
-                dragId = e.pointerId;
-                dragStartX = e.clientX;
-                dragStartY = e.clientY;
-                startTx = tx;
-                startTy = ty;
-                snowman.classList.add('dragging');
-            } else if (n === 2) {
-                startScale = s;
-                const [p1, p2] = Array.from(pointers.values());
-                startDist = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1;
-                snowman.classList.remove('dragging');
-                dragId = null;
-            }
-        }, { passive: false });
-
-        snowman.addEventListener('pointermove', e => {
-            if (!pointers.has(e.pointerId)) return;
-            e.preventDefault();
-            pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-            
-            const n = pointers.size;
-            const { tx, ty, s } = getTransform();
-            
-            if (n === 1 && dragId !== null) {
-                const cur = pointers.get(dragId);
-                const dx = cur.x - dragStartX;
-                const dy = cur.y - dragStartY;
-                setTransform(startTx + dx, startTy + dy, s);
-            } else if (n === 2) {
-                const [p1, p2] = Array.from(pointers.values());
-                const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1;
-                const scale = clamp(startScale * (dist / startDist), 0.5, 2);
-                setTransform(tx, ty, scale);
-            }
-        }, { passive: false });
-
-        function endPointer(e) {
-            if (pointers.has(e.pointerId)) pointers.delete(e.pointerId);
-            if (e.pointerId === dragId) {
-                dragId = null;
-                snowman.classList.remove('dragging');
-            }
-            if (pointers.size === 1) {
-                const id = Array.from(pointers.keys())[0];
-                const pt = pointers.get(id);
-                const { tx, ty } = getTransform();
-                dragId = id;
-                dragStartX = pt.x;
-                dragStartY = pt.y;
-                startTx = tx;
-                startTy = ty;
-                snowman.classList.add('dragging');
-            }
-        }
-
-        snowman.addEventListener('pointerup', endPointer, { passive: false });
-        snowman.addEventListener('pointercancel', endPointer, { passive: false });
-        snowman.addEventListener('pointerleave', endPointer, { passive: false });
-
-        /* ========== ОБРАБОТЧИКИ КНОПОК ========== */
-        startBtn.addEventListener('click', startApp);
-
+        /* ========== УЛУЧШЕНИЕ 10: Обновление UI с сохранением настроек ========== */
         function updateTogglesUI() {
-            btnSnow.classList.toggle('is-on', snowEnabled);
-            btnSnow.setAttribute('aria-pressed', String(snowEnabled));
+            btnSnow.classList.toggle('is-on', state.snowEnabled);
+            btnSnow.setAttribute('aria-pressed', String(state.snowEnabled));
             
-            btnSnowman.classList.toggle('is-on', snowmanEnabled);
-            btnSnowman.setAttribute('aria-pressed', String(snowmanEnabled));
-            snowman.style.display = running && snowmanEnabled ? 'block' : 'none';
+            btnSnowman.classList.toggle('is-on', state.snowmanEnabled);
+            btnSnowman.setAttribute('aria-pressed', String(state.snowmanEnabled));
+            if (running) {
+                snowman.style.display = state.snowmanEnabled ? 'block' : 'none';
+            }
             
-            btnMusic.classList.toggle('is-on', musicEnabled);
-            btnMusic.setAttribute('aria-pressed', String(musicEnabled));
+            btnMusic.classList.toggle('is-on', state.musicEnabled);
+            btnMusic.setAttribute('aria-pressed', String(state.musicEnabled));
             
-            btnDrifts.classList.toggle('is-on', driftsEnabled);
-            btnDrifts.setAttribute('aria-pressed', String(driftsEnabled));
+            btnDrifts.classList.toggle('is-on', state.driftsEnabled);
+            btnDrifts.setAttribute('aria-pressed', String(state.driftsEnabled));
             
-            btnPlow.classList.toggle('is-on', plowAutoEnabled);
-            btnPlow.setAttribute('aria-pressed', String(plowAutoEnabled));
+            btnPlow.classList.toggle('is-on', state.plowAutoEnabled);
+            btnPlow.setAttribute('aria-pressed', String(state.plowAutoEnabled));
             
-            if (navigator.vibrate) navigator.vibrate(8);
+            // Виброотклик на мобильных
+            if (navigator.vibrate && isMobile) {
+                try {
+                    navigator.vibrate(10);
+                } catch (e) {
+                    console.log('Вибрация не поддерживается');
+                }
+            }
         }
+
+        // Инициализируем UI из сохраненных настроек
+        updateTogglesUI();
 
         btnSnow.addEventListener('click', () => {
-            snowEnabled = !snowEnabled;
+            state.snowEnabled = !state.snowEnabled;
             updateTogglesUI();
+            saveSettings();
         });
 
         btnSnowman.addEventListener('click', () => {
-            snowmanEnabled = !snowmanEnabled;
+            state.snowmanEnabled = !state.snowmanEnabled;
             updateTogglesUI();
+            saveSettings();
         });
 
         btnMusic.addEventListener('click', toggleMusic);
 
         btnDrifts.addEventListener('click', () => {
-            driftsEnabled = !driftsEnabled;
+            state.driftsEnabled = !state.driftsEnabled;
             updateTogglesUI();
+            saveSettings();
         });
 
         btnPlow.addEventListener('click', () => {
-            plowAutoEnabled = !plowAutoEnabled;
+            state.plowAutoEnabled = !state.plowAutoEnabled;
             updateTogglesUI();
-            if (plowAutoEnabled && !plow.active) {
+            saveSettings();
+            if (state.plowAutoEnabled && !plow.active) {
                 scheduleNextPlow(1000);
             } else {
                 clearTimeout(nextPlowTimer);
             }
         });
 
-        /* ========== ФОТОСЪЕМКА ========== */
+        /* ========== УЛУЧШЕНИЕ 11: Предпросмотр фото перед сохранением ========== */
+        let currentPhotoBlob = null;
+
         shotBtn.addEventListener('click', async () => {
+            // Виброотклик
+            if (navigator.vibrate && isMobile) {
+                try {
+                    navigator.vibrate([30, 20, 30]);
+                } catch (e) {}
+            }
+            
+            // Вспышка
             flash.classList.add('active');
             setTimeout(() => flash.classList.remove('active'), 300);
 
-            const W = canvas.clientWidth;
-            const H = canvas.clientHeight;
-            
-            const shot = document.createElement('canvas');
-            shot.width = Math.floor(W * CAPTURE_DPR);
-            shot.height = Math.floor(H * CAPTURE_DPR);
-            const sctx = shot.getContext('2d');
-            sctx.setTransform(CAPTURE_DPR, 0, 0, CAPTURE_DPR, 0, 0);
-
-            renderVideo(sctx);
-            
-            if (driftsEnabled) drawDrifts(sctx);
-            if (plow.active) drawPlow(sctx, performance.now());
-            drawSpray(sctx);
-            if (snowEnabled) drawFlakes(sctx);
-            
-            if (snowmanEnabled && snowmanImg.complete) {
-                const rC = canvas.getBoundingClientRect();
-                const rM = snowman.getBoundingClientRect();
-                const mx = rM.left - rC.left;
-                const my = rM.top - rC.top;
-                const mw = rM.width;
-                const mh = rM.height;
-                const { s } = getTransform();
+            try {
+                const W = canvas.clientWidth;
+                const H = canvas.clientHeight;
                 
-                sctx.save();
-                sctx.translate(mx + mw/2, my + mh/2);
-                sctx.scale(s, s);
-                sctx.drawImage(snowmanImg, -mw/2, -mh/2, mw, mh);
-                sctx.restore();
+                const shot = document.createElement('canvas');
+                shot.width = Math.floor(W * CAPTURE_DPR);
+                shot.height = Math.floor(H * CAPTURE_DPR);
+                const sctx = shot.getContext('2d');
+                sctx.setTransform(CAPTURE_DPR, 0, 0, CAPTURE_DPR, 0, 0);
+
+                renderVideo(sctx);
+                
+                if (state.driftsEnabled) drawDrifts(sctx);
+                if (plow.active) drawPlow(sctx, performance.now());
+                drawSpray(sctx);
+                if (state.snowEnabled) drawFlakes(sctx);
+                
+                if (state.snowmanEnabled && snowmanImg.complete) {
+                    const rC = canvas.getBoundingClientRect();
+                    const rM = snowman.getBoundingClientRect();
+                    const mx = rM.left - rC.left;
+                    const my = rM.top - rC.top;
+                    const mw = rM.width;
+                    const mh = rM.height;
+                    const { s } = getTransform();
+                    
+                    sctx.save();
+                    sctx.translate(mx + mw/2, my + mh/2);
+                    sctx.scale(s, s);
+                    sctx.drawImage(snowmanImg, -mw/2, -mh/2, mw, mh);
+                    sctx.restore();
+                }
+                
+                // Добавляем логотип
+                sctx.fillStyle = 'white';
+                sctx.font = 'bold 16px Arial';
+                sctx.textAlign = 'center';
+                sctx.fillText('snowman496school.ru', W/2, H - 30);
+                
+                // Создаем Blob и показываем превью
+                shot.toBlob(blob => {
+                    currentPhotoBlob = blob;
+                    const url = URL.createObjectURL(blob);
+                    previewImage.src = url;
+                    photoPreview.style.display = 'flex';
+                }, 'image/png', 0.92);
+                
+            } catch (err) {
+                console.error('Ошибка создания фото:', err);
+                alert('Не удалось создать фото. Попробуйте еще раз.');
             }
-            
-            sctx.fillStyle = 'white';
-            sctx.font = 'bold 16px Arial';
-            sctx.textAlign = 'center';
-            sctx.fillText('snowman496school.ru', W/2, H - 30);
-            
-            shot.toBlob(blob => {
-                const now = new Date();
-                const pad = n => String(n).padStart(2, '0');
-                const fname = `snowman496_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}.png`;
-                
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fname;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
-            }, 'image/png', 0.9);
         });
 
-        /* ========== ПРЕДЗАГРУЗКА МУЗЫКИ ========== */
-        initAudio().catch(() => {
-            console.log('Музыка не загружена');
+        saveBtn.addEventListener('click', () => {
+            if (!currentPhotoBlob) return;
+            
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const fname = `snowman496_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}.png`;
+            
+            const url = URL.createObjectURL(currentPhotoBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fname;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            
+            photoPreview.style.display = 'none';
+            if (previewImage.src) {
+                URL.revokeObjectURL(previewImage.src);
+                previewImage.src = '';
+            }
+            currentPhotoBlob = null;
         });
 
-        /* ========== ПРОВЕРКА СНЕГОВИКА ========== */
-        snowmanImg.onload = () => console.log('Снеговик загружен');
-        snowmanImg.onerror = () => {
-            console.warn('Снеговик не загружен');
-            snowmanImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDE1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNzUiIGN5PSIxNDAiIHI9IjQwIiBmaWxsPSJ3aGl0ZSIvPjxjaXJjbGUgY3g9Ijc1IiBjeT0iODAiIHI9IjMwIiBmaWxsPSJ3aGl0ZSIvPjxjaXJjbGUgY3g9Ijc1IiBjeT0iNDAiIHI9IjIwIiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==';
+        cancelBtn.addEventListener('click', () => {
+            photoPreview.style.display = 'none';
+            if (previewImage.src) {
+                URL.revokeObjectURL(previewImage.src);
+                previewImage.src = '';
+            }
+            currentPhotoBlob = null;
+        });
+
+        /* ========== УЛУЧШЕНИЕ 12: Загрузка снеговика с индикатором ========== */
+        snowmanImg.onload = () => {
+            console.log('Снеговик загружен');
+            snowmanImg.style.opacity = '1';
         };
+
+        snowmanImg.onerror = () => {
+            console.warn('Основной снеговик не загружен, используем SVG-замену');
+            const svgString = `data:image/svg+xml,${encodeURIComponent(`
+                <svg width="225" height="300" viewBox="0 0 150 200" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="75" cy="150" r="40" fill="white" filter="url(#shadow)"/>
+                    <circle cx="75" cy="85" r="30" fill="white" filter="url(#shadow)"/>
+                    <circle cx="75" cy="40" r="20" fill="white" filter="url(#shadow)"/>
+                    <circle cx="65" cy="35" r="3" fill="black"/>
+                    <circle cx="85" cy="35" r="3" fill="black"/>
+                    <path d="M75 45 Q75 50 70 52" stroke="orange" stroke-width="2" fill="none"/>
+                    <circle cx="75" cy="60" r="2" fill="black"/>
+                    <circle cx="75" cy="70" r="2" fill="black"/>
+                    <defs>
+                        <filter id="shadow">
+                            <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+                        </filter>
+                    </defs>
+                </svg>
+            `)}`;
+            snowmanImg.src = svgString;
+        };
+
+        // Начинаем загрузку медиа
+        snowmanImg.style.opacity = '0.5';
+        snowmanImg.style.transition = 'opacity 0.3s';
+        initAudio();
+
+        // Обработчики событий
+        startBtn.addEventListener('click', startApp);
     </script>
 </body>
 </html>
